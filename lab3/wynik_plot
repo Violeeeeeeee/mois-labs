@@ -1,0 +1,3 @@
+set terminal jpeg
+set output "wynik_plot.jpg"
+plot  "wartosci.txt" w points pointsize 3 , "inter.txt" w lines, x*x*x+sin(x*x)
