@@ -1,0 +1,16 @@
+fun1(x) = 2*cos(x*sin(x))
+fun2(x) = sin(x**5)
+fun3(x) = 3*sin(x)
+set output "zad1_old.jpeg"
+set terminal jpeg
+set grid
+set title "Wykres teksotwy"
+set ylabel "Amplituda"
+set key box top left width -1
+set xrange [-3:3]
+set yrange [-4:5]
+plot "fun1.txt" using 1:($2+$3)/2:2:3 lw 1.5 lc rgb 'red' w yerrorbars t "Dane z pliku fun1.txt", \
+     fun2(x) lw 2 lc rgb 'green' t "funkcja2: sinus(x^5)", \
+     fun1(x) lw 1 lc rgb 'blue' w boxes t "funkcja1: 2*cos(x*sin(x))", \
+     fun3(x) lw 2 lc rgb 'red' t "funkcja3: 3*sin(x)"
+
