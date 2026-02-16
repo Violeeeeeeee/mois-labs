@@ -1,0 +1,91 @@
+---
+format:
+  pdf:
+    documentclass: llncs
+    classoption: runningheads
+    pdf-engine: pdflatex
+    cite-method: natbib
+    biblio-style: splncs04
+    natbiboptions: "numbers,sort,compress,sectionbib"
+    number-sections: true
+    number-depth: 3
+bibliography: bibliography.bib
+---
+
+\title{Sprawozdanie z Laboratorium: Poszukiwanie pierwiastków równań nieliniowych}
+\titlerunning{Lab 6: Root Finding}
+
+\author{Vladyslav Humeniuk}
+\authorrunning{Vladyslav Humeniuk}
+\institute{}
+\maketitle
+
+## Wstęp {#sec-intro}
+
+Celem laboratorium było zapoznanie się z numerycznymi metodami rozwiązywania równań nieliniowych przy użyciu biblioteki *GNU Scientific Library* (GSL)[@gsl_ref]. Zadanie składało się z następujących etapów:
+
+1.  Analiza porównawcza efektywności metod "bracketingu" (przedziałowych): Bisekcji, Metody Siecznych (*False Position*) oraz Metody Brenta dla funkcji $x^2 - 5 = 0$.
+2.  Analiza ograniczeń metod przedziałowych na przykładzie funkcji z pierwiastkiem wielokrotnym $f(x) = (x-1)^2$ oraz wyjaśnienie przyczyn braku zbieżności.
+3.  Zastosowanie metod opartych na pochodnych (Newtona-Raphsona) do rozwiązania problemu, w którym metody bracketingu zawodzą.
+4.  Porównanie rzędu zbieżności metody Bisekcji oraz metody Newtona dla równania przestępnego $e^{-x} - \sin(x) = 0$.
+
+## Metodyka rozwiązania problemu
+
+W ramach laboratorium wykorzystano gotowe implementacje solverów z biblioteki GSL. Dla funkcji dobrze uwarunkowanych ($f(x) = x^2 - 5$) zastosowano metody przedziałowe, które gwarantują znalezienie pierwiastka, o ile na krańcach przedziału funkcja przyjmuje wartości różnych znaków ($f(a) \cdot f(b) < 0$).
+
+W drugiej części eksperymentu zbadano przypadek pierwiastka parzystokrotnego dla $f(x) = (x-1)^2$. Ponieważ funkcja ta jest nieujemna w całej dziedzinie rzeczywistej, metody oparte na zmianie znaku nie mogą zostać użyte. W tym celu wykorzystano metodę Newtona-Raphsona, zaimplementowaną przy użyciu `gsl_root_fdfsolver`, która wykorzystuje jawną postać pochodnej funkcji do wyznaczania kolejnych przybliżeń.
+
+Jako kryterium stopu przyjęto testy zbieżności oparte na błędzie bezwzględnym (`gsl_root_test_interval` oraz `gsl_root_test_delta`) z zadaną tolerancją $\epsilon$.
+
+## Wyniki
+
+### Analiza metod bracketingu dla $f(x) = x^2 - 5$
+
+Dla równania $x^2 - 5 = 0$ poszukiwano pierwiastka na przedziale $[0, 5]$. Wartość analityczna wynosi $\sqrt{5} \approx 2.236068$. Funkcja spełnia warunek zmiany znaku na krańcach przedziału.
+
+![Wykres funkcji $f(x) = x^2 - 5$ na przedziale $[0, 5]$.](fig1.pdf){#fig-quad width=100% fig-pos='h'}
+
+Wyniki wydajności algorytmów zestawiono w Tabeli \ref{tbl-tab1}.
+
+::: {#tbl-tab1 tbl-pos='h'}
+| Metoda | Liczba Iteracji | Błąd końcowy (est.) | Charakterystyka |
+| :--- | :---: | :---: | :--- |
+| **Bisekcja** | 12 | 0.00122 | Zbieżność liniowa, powolna redukcja przedziału. |
+| **False Position** | 9 | < 1e-7 | Szybsza dla funkcji gładkich, interpolacja sieczną. |
+| **Brent** | 6 | 0.00057 | Najszybsza, łączy pewność bisekcji z szybkością interpolacji. |
+
+Porównanie liczby iteracji dla różnych metod bracketingu (tolerancja $\epsilon \approx 0.001$).
+:::
+
+Metoda Brenta-Dekkera okazała się bezkonkurencyjna, osiągając zbieżność w zaledwie 6 iteracjach. Jest to standardowy algorytm wybierany w bibliotece GSL dla ogólnych zastosowań, ponieważ dynamicznie przełącza się między szybką interpolacją a bezpieczną bisekcją[@gsl_roots].
+
+### Problematyka pierwiastków wielokrotnych
+
+Podczas próby rozwiązania równania $x^2 - 2x + 1 = 0$ metodami przedziałowymi, program zakończył działanie błędem `GSL_EINVAL`.
+
+![Wykres funkcji $f(x) = (x-1)^2$. Funkcja jest styczna do osi OX w punkcie $x=1$.](fig2.pdf){#fig-touch width=100% fig-pos='h'}
+
+Przyczyną błędu jest brak zmiany znaku funkcji. $f(x) = (x-1)^2 \ge 0$ dla każdego $x$. Algorytmy takie jak bisekcja czy Brent wymagają tzw. "bracketingu" (objęcia pierwiastka), gdzie $f(lower) > 0$ i $f(upper) < 0$ (lub odwrotnie). Ponieważ tutaj $f(0)=1$ i np. $f(5)=16$, solver nie może zagwarantować istnienia pierwiastka wewnątrz przedziału.
+
+### Zastosowanie metody Newtona (rozwiązanie z pochodną)
+
+Aby rozwiązać problem pierwiastka wielokrotnego, zastosowano metodę Newtona, która nie wymaga zmiany znaku funkcji, a jedynie informacji o jej nachyleniu. Wykorzystano pochodną analityczną:
+$$f'(x) = 2x - 2$$
+
+Uruchomienie programu `root_finding_deriv` pozwoliło na poprawne wyznaczenie pierwiastka $x \approx 1.0$.
+
+Warto zauważyć istotną właściwość teoretyczną: standardowa metoda Newtona posiada zbieżność kwadratową tylko dla pierwiastków jednokrotnych. W przypadku pierwiastka podwójnego (jak tutaj, gdzie $f(1)=0$ i $f'(1)=0$), zbieżność metody Newtona degraduje do liniowej. Mimo to, w przeciwieństwie do metod bisekcji, algorytm jest w stanie znaleźć rozwiązanie, "ześlizgując się" po paraboli do punktu minimum.
+
+### Analiza porównawcza dla równania przestępnego
+
+Porównano metodę Bisekcji i Newtona dla równania $e^{-x} - \sin(x) = 0$. Wykres błędu (Rys. 3) w skali logarytmicznej ilustruje różnicę klas algorytmów.
+
+![Zbieżność błędu: Bisekcja vs Newton dla $f(x) = e^{-x} - \sin(x)$.](fig3.pdf){#fig-errors width=100% fig-pos='h'}
+
+Metoda bisekcji redukuje błąd o połowę w każdej iteracji (linia prosta o łagodnym nachyleniu na wykresie pół-logarytmicznym). Metoda Newtona wykazuje tutaj **zbieżność kwadratową** – błąd w każdej kolejnej iteracji jest proporcjonalny do kwadratu błędu poprzedniego ($\epsilon_{n+1} \approx c \cdot \epsilon_n^2$). Na wykresie widoczne jest to jako gwałtowne załamanie krzywej błędu. Dokładność rzędu $10^{-7}$ uzyskano w metodzie Newtona już w 4. iteracji, podczas gdy bisekcja wymagała ponad 20 iteracji.
+
+## Wnioski
+
+1.  **Dobór metody:** Metoda Brenta jest najbardziej uniwersalnym wyborem dla funkcji ciągłych zmieniających znak, oferując najlepszy balans między szybkością a niezawodnością.
+2.  **Ograniczenia metod przedziałowych:** Dla pierwiastków o krotności parzystej (stycznych do osi OX) metody bracketingu są nieskuteczne. Wymagane jest użycie metod gradientowych (Newtona, Steffensona) lub poszukiwanie minimum funkcji zamiast miejsca zerowego.
+3.  **Szybkość zbieżności:** Metody wykorzystujące pochodne (Newton) oferują znacznie szybszą zbieżność (kwadratową) niż metody bezpochodnych (liniową/nadliniową), jednak wymagają znajomości analitycznej postaci pochodnej i dobrego punktu startowego.
