@@ -21,6 +21,7 @@ int main (void)
 
   // choose method: gsl_root_fdfsolver_newton, gsl_root_fdfsolver_steffenson
   T = gsl_root_fdfsolver_newton;
+  // T = gsl_root_fdfsolver_steffenson;
   s = gsl_root_fdfsolver_alloc (T);
 
   double x = 0.0;

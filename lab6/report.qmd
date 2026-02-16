@@ -1,0 +1,150 @@
+---
+format:
+  pdf:
+    documentclass: llncs
+    classoption: runningheads
+    pdf-engine: pdflatex
+    cite-method: natbib
+    biblio-style: splncs04
+    natbiboptions: "numbers,sort,compress,sectionbib"
+    number-sections: true
+    number-depth: 3
+bibliography: bibliography.bib
+---
+
+\title{Sprawozdanie z Laboratorium: Poszukiwanie pierwiastków równań nieliniowych}
+\titlerunning{Lab 6: Root Finding}
+
+\author{Vladyslav Humeniuk}
+\authorrunning{Vladyslav Humeniuk}
+\institute{}
+\maketitle
+
+## Wstęp {#sec-intro}
+
+Celem laboratorium było zapoznanie się z numerycznymi metodami rozwiązywania równań nieliniowych przy użyciu biblioteki *GNU Scientific Library* (GSL)[@gsl_ref]. Zadanie składało się z następujących etapów:
+
+* Analiza i uruchomienie gotowego programu znajdującego pierwiastek równania $x^2 - 5 = 0$ metodą bisekcji.
+* Modyfikacja kodu w celu porównania efektywności trzech metod "bracketingu" (przedziałowych): Bisekcji, Metody Siecznych (*False Position*) oraz Metody Brenta.
+* Próba znalezienia miejsca zerowego dla funkcji $f(x) = x^2 - 2x + 1$ (posiadającej pierwiastek podwójny) metodami przedziałowymi i wyjaśnienie przyczyn niepowodzenia.
+* Implementacja programu wykorzystującego metody oparte na pochodnych (Newtona, Steffensona oraz Uproszczona Metoda Newtona) do rozwiązania problemu pierwiastka podwójnego.
+* Porównanie szybkości zbieżności metody Bisekcji oraz metody Newtona dla równania przestępnego $e^{-x} - \sin{x} = 0$.
+
+## Metodyka rozwiązania problemu
+
+Realizacja zadań opierała się na doborze algorytmów numerycznych adekwatnych do specyfiki badanych funkcji[@num_algo]. W pierwszej kolejności, dla funkcji dobrze uwarunkowanych ($f(x) = x^2 - 5$), zastosowano metody przedziałowe. Skonfrontowano niezawodną, lecz powolną metodę bisekcji z hybrydową metodą Brenta-Dekkera.
+
+Kluczowym wyzwaniem była analiza przypadku pierwiastka wielokrotnego dla $f(x) = (x-1)^2$. Funkcja ta jest styczna do osi OX i nie zmienia znaku, co uniemożliwia zastosowanie metod przedziałowych (brak spełnienia warunku $f(a) \cdot f(b) < 0$). Problem rozwiązano przy użyciu metod gradientowych: standardowej metody Newtona, metody Steffensona oraz Uproszczonej Metody Newtona. Pozwoliło to na zaobserwowanie zjawiska degradacji rzędu zbieżności metody Newtona dla pierwiastków wielokrotnych oraz ograniczeń metody uproszczonej.
+
+Ostatni etap stanowiła ocena wydajności dla równania przestępnego $e^{-x} - \sin{x} = 0$, przyjmując jako kryterium liczbę iteracji dla zadanej tolerancji $\epsilon$.
+
+## Wyniki
+
+### Analiza metod bracketingu dla $f(x) = x^2 - 5$
+
+Pierwszym badanym przypadkiem było równanie $x^2 - 5 = 0$ na przedziale $[0, 5]$. Wartość analityczna pierwiastka wynosi $\sqrt{5} \approx 2.236068$. Badana funkcja jest ciągła i monotonicznie rosnąca w zadanym przedziale, a na jego końcach przyjmuje wartości o przeciwnych znakach.
+
+![Wykres funkcji $f(x) = x^2 - 5$ na przedziale $[0, 5]$. Porównanie krzywej funkcji z osią zerową.](fig1.pdf){#fig-quad width=100% fig-pos='h'}
+
+Wyniki testów wydajności dla trzech różnych algorytmów zestawiono w Tabeli \ref{tbl-tab1}.
+
+::: {#tbl-tab1 tbl-pos='h'}
+```{=latex}
+\begin{table}
+\begin{tabular}{|l|l|l|l|}
+\hline
+Metoda & Iteracje & Błąd końcowy & Charakterystyka\\
+\hline
+Bisekcja & 12 & 0.00122 & Zbieżność liniowa, powolna, ale gwarantowana.\\
+False Position & 9 & 0.00000 & Szybsza od bisekcji dla funkcji gładkich.\\
+Brent & 6 & 0.00057 & Najszybsza, łączy zalety obu powyższych metod.\\
+\hline
+\end{tabular}
+\end{table}
+```
+Porównanie liczby iteracji dla różnych metod bracketingu.
+:::
+
+Metoda Brenta-Dekkera okazała się najefektywniejsza, osiągając zadowalającą dokładność w zaledwie 6 iteracjach, co potwierdza jej status jako domyślnego wyboru w bibliotekach numerycznych[@gsl_roots].
+
+### Problematyka pierwiastków wielokrotnych
+
+Podczas próby znalezienia pierwiastka równania $x^2 - 2x + 1 = 0$ metodami przedziałowymi program zakończył działanie błędem `GSL_EINVAL: endpoints do not straddle y=0`. Przyczyną jest brak zmiany znaku funkcji $f(x) = (x-1)^2$ w otoczeniu pierwiastka $x=1$ (Rys. \ref{fig-touch}).
+
+![Wykres funkcji $f(x) = (x-1)^2$. Pierwiastek w punkcie $x=1$ jest punktem styczności.](fig2.pdf){#fig-touch width=100% fig-pos='h'}
+
+### Analiza metod gradientowych dla pierwiastka podwójnego
+
+W celu rozwiązania problemu pierwiastka podwójnego zastosowano metody wykorzystujące pochodną. Porównano metodę Newtona oraz metodę Steffensona.
+
+::: {#tbl-deriv tbl-pos='h'}
+```{=latex}
+\begin{table}
+\begin{tabular}{|l|l|l|l|}
+\hline
+Iteracja & Metoda Newtona (Błąd) & Metoda Steffensona (Błąd) \\
+\hline
+1 & 0.50000 & 0.50000 \\
+2 & 0.25000 & 0.25000 \\
+3 & 0.12500 & 0.00000 (Zbieżność) \\
+4 & 0.06250 & - \\
+... & ... & - \\
+10 & 0.00097 & - \\
+\hline
+\end{tabular}
+\end{table}
+```
+
+Porównanie zbieżności dla $f(x)=(x-1)^2$, start $x_0=0$.
+:::
+
+Analiza wyników prowadzi do istotnych obserwacji:
+
+1.  **Metoda Newtona:** Mimo że teoretycznie posiada zbieżność kwadratową, w przypadku pierwiastka o krotności $m=2$, jej rząd zbieżności spada do liniowego ($p=1$). Widać to po błędach w kolejnych iteracjach: $0.5 \to 0.25 \to 0.125$. Błąd maleje dokładnie o czynnik $1/2$ w każdym kroku (stała błędu $C = 1 - 1/m = 0.5$).
+2.  **Metoda Steffensona:** Osiągnęła wynik analityczny już w 3 iteracji. Metoda ta wykorzystuje proces $\Delta^2$ Aitkena do przyspieszania zbieżności ciągu, co pozwoliło jej na zachowanie szybkiej zbieżności mimo wielokrotności pierwiastka.
+
+### Uproszczona Metoda Newtona
+
+W ramach eksperymentu zaimplementowano również Uproszczoną Metodę Newtona, w której wartość pochodnej obliczana jest jednokrotnie w punkcie startowym $f'(x_0)$, a następnie wykorzystywana jako stała w kolejnych iteracjach:
+$$x_{i+1} = x_i - \frac{f(x_i)}{f'(x_0)}$$
+
+Wyniki dla funkcji $f(x) = (x-1)^2$ przy punkcie startowym $x_0=0$ ($f'(x_0)=-2$) przedstawiają się następująco:
+
+::: {#tbl-simplified tbl-pos='h'}
+```{=latex}
+\begin{table}
+\begin{tabular}{|l|l|l|}
+\hline
+Iteracja & Pierwiastek & Błąd \\
+\hline
+1 & 0.5000000 & 0.5000000 \\
+5 & 0.7750815 & 0.2249185 \\
+10 & 0.8610982 & 0.1389018 \\
+20 & 0.9198874 & 0.0801126 \\
+42 & 0.9580014 & 0.0419986 \\
+\hline
+\end{tabular}
+\end{table}
+```
+
+Zbieżność Uproszczonej Metody Newtona.
+:::
+
+Metoda ta wykazała najgorszą wydajność spośród testowanych metod gradientowych. Po 42 iteracjach błąd nadal wynosił ok. 0.04. Jest to spowodowane faktem, że stała pochodna $f'(0) = -2$ przestaje być dobrym przybliżeniem nachylenia funkcji w pobliżu pierwiastka $x=1$, gdzie rzeczywista pochodna dąży do 0.
+
+### Analiza porównawcza dla równania przestępnego
+
+Ostatnim elementem badania było porównanie metody bisekcji i metody Newtona dla równania $e^{-x} - \sin{x} = 0$.
+
+![Porównanie zbieżności błędu metod Bisekcji i Newtona dla równania $f(x) = e^{-x} - \sin{x}$. Oś Y w skali logarytmicznej.](fig3.pdf){#fig-errors width=100% fig-pos='h'}
+
+Metoda bisekcji wykazuje zbieżność liniową (stałe nachylenie na wykresie pół-logarytmicznym), wymagając 25 iteracji do uzyskania pełnej precyzji. Metoda Newtona demonstruje klasyczną zbieżność kwadratową (podwajanie liczby cyfr znaczących w każdym kroku), osiągając wynik w zaledwie 5 iteracjach.
+
+## Wnioski
+
+Przeprowadzone eksperymenty numeryczne pozwalają na sformułowanie następujących wniosków:
+
+1.  Dla funkcji $f(x) = (x-1)^2$ **metoda Newtona traci swoją kwadratową zbieżność**, degradując do zbieżności liniowej. Jest to klasyczny przykład zachowania tej metody dla pierwiastków wielokrotnych.
+2.  **Metoda Steffensona** najlepiej poradziła sobie z pierwiastkiem podwójnym, zbiegając błyskawicznie dzięki wbudowanej akceleracji zbieżności.
+3.  **Uproszczona Metoda Newtona** okazała się nieefektywna dla funkcji o zanikającej pochodnej w pobliżu pierwiastka, mimo niskiego kosztu pojedynczej iteracji.
+4.  W przypadku typowych równań przestępnych (pojedyncze pierwiastki), metoda Newtona jest bezkonkurencyjna czasowo w porównaniu do metod bracketingu, jednak wymaga znajomości analitycznej postaci pochodnej.

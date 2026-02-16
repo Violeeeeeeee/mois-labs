@@ -1,12 +1,11 @@
-set terminal pngcairo size 800,600 enhanced font 'Verdana,10'
-set output "fig3.png"
-set terminal pngcairo size 1000,600 enhanced font 'Verdana,10'
-set title "Convergence Speed Comparison: Newton vs Bisection"
+set terminal pdfcairo enhanced color font 'Verdana,12' size 5.0,3.0
+set output "fig3.pdf"
+set border 3 lw 1
+set tics nomirror out scale 1
+set key right top nobox
 set xlabel "Iteration Number"
-set ylabel "Absolute Error |x - root| (log scale)"
+set ylabel "Absolute Error"
 set logscale y
 set grid
-set key right top
-
-plot "error_bisection.txt" using 1:2 with linespoints lw 2 pt 7 lc rgb "blue" title "Bisection Method", \
-     "error_newton.txt" using 1:2 with linespoints lw 2 pt 7 lc rgb "red" title "Newton Method"
+plot "error_bisection.txt" using 1:2 with lines lw 2 lc rgb "blue" title "Bisection Method", \
+     "error_newton.txt" using 1:2 with lines lw 2 lc rgb "red" title "Newton Method"
