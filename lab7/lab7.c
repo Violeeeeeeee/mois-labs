@@ -26,7 +26,12 @@ int main(int argc, char **argv) {
     gsl_rng_env_setup();
     const gsl_rng_type *T = gsl_rng_default;
     gsl_rng *r = gsl_rng_alloc(T);
-    gsl_rng_set(r, time(NULL));
+
+    long seed = time(NULL);
+    if (argc == 3) {
+        seed = atol(argv[2]);
+    }
+    gsl_rng_set(r, seed);
 
     gsl_matrix *A = gsl_matrix_alloc(n, n);
     gsl_matrix *A_copy = gsl_matrix_alloc(n, n);
