@@ -1,0 +1,96 @@
+---
+format:
+  pdf:
+    documentclass: llncs
+    classoption: runningheads
+    pdf-engine: pdflatex
+    cite-method: natbib
+    biblio-style: splncs04
+    natbiboptions: "numbers,sort,compress,sectionbib"
+    number-sections: true
+    number-depth: 3
+bibliography: bibliography.bib
+---
+
+\title{Sprawozdanie: Układy równań}
+\titlerunning{Lab 7: Złożoność Dekompozycji LU}
+
+\author{Vladyslav Humeniuk}
+\authorrunning{Vladyslav Humeniuk}
+\institute{}
+\maketitle
+
+## Wstęp
+
+Głównym celem niniejszego eksperymentu była empiryczna weryfikacja teoretycznej złożoności obliczeniowej rozwiązywania układów równań liniowych postaci $Ax = b$ przy użyciu dekompozycji LU. Analiza teoretyczna sugeruje, że dekompozycja macierzy nieosobliwej $A$ na macierze trójkątną dolną ($L$) i górną ($U$) wymaga około $\frac{2}{3}N^3$ operacji zmiennoprzecinkowych, co odpowiada złożoności czasowej $O(N^3)$[@num_algo]. Z kolei kolejny krok, polegający na rozwiązaniu układu poprzez podstawianie w przód i wstecz, wymaga $O(N^2)$ operacji.
+
+Niniejsze sprawozdanie przedstawia analizę wydajności tych dwóch odrębnych faz przy użyciu *GNU Scientific Library* (GSL)[@gsl_ref], mierząc czasy wykonania dla wymiarów macierzy w zakresie od $N=10$ do $N=1000$.
+
+## Metodyka
+
+Eksperyment został zaimplementowany w języku C przy użyciu procedur GSL `gsl_linalg_LU_decomp` oraz `gsl_linalg_LU_solve` opisanych w dokumentacji biblioteki[@gsl_ref]. Procedura symulacji przebiegała następująco:
+
+1.  **Generowanie danych:** Dla każdego $N \in [10, 1000]$, macierz $A$ oraz wektor $b$ zostały wypełnione losowymi wartościami z rozkładu jednostajnego.
+2.  **Dekompozycja:** Zmierzono czas potrzebny na obliczenie faktoryzacji LU.
+3.  **Rozwiązanie:** Zmierzono czas potrzebny na rozwiązanie układu przy użyciu wcześniej obliczonej faktoryzacji.
+4.  **Weryfikacja:** Rozwiązanie zostało zweryfikowane poprzez obliczenie normy euklidesowej wektora residuum $r = ||Ax - b||$.
+
+Pomiary czasu wykonano przy użyciu funkcji `getrusage()` w celu zarejestrowania czasu procesora (użytkownika + systemowego) z precyzją mikrosekundową.
+
+\newpage
+
+## Wyniki
+
+Zgromadzone dane wydajnościowe podsumowano w Tabeli \ref{tbl-results}. Błędy rezydualne dla wszystkich przypadków testowych mieściły się w granicach precyzji maszynowej ($10^{-10}$ do $10^{-13}$), co potwierdza stabilność numeryczną algorytmu dostarczanego przez GSL[@gsl_ref].
+
+::: {#tbl-results tbl-pos='h'}
+```{=latex}
+\begin{table}
+\centering
+\begin{tabular}{|r|r|r|r|}
+\hline
+$N$ & Czas Dekompozycji [s] & Czas Rozwiązywania [s] & Błąd $||Ax-b||$ \\
+\hline
+10 & 0.000206 & 0.000026 & $5.68 \times 10^{-13}$ \\
+100 & 0.001146 & 0.000061 & $3.93 \times 10^{-12}$ \\
+500 & 0.030898 & 0.000285 & $1.83 \times 10^{-10}$ \\
+600 & 0.045422 & 0.000410 & $2.04 \times 10^{-09}$ \\
+800 & 0.104717 & 0.000754 & $2.00 \times 10^{-10}$ \\
+1000 & 0.201480 & 0.001222 & $1.20 \times 10^{-09}$ \\
+\hline
+\end{tabular}
+\end{table}
+```
+
+Czasy wykonania i błędy rezydualne dla wybranych rozmiarów macierzy.
+:::
+
+### Analiza Złożoności
+
+Dane empiryczne wyraźnie ilustrują różnicę w tempie wzrostu między dwiema fazami. Rysunek \ref{fig-decomp} wizualizuje czas dekompozycji, który wykazuje sześcienny trend wzrostu, zgodny z teorią numeryczną[@num_algo].
+
+![Czas dekompozycji LU w funkcji rozmiaru macierzy $N$. Krzywa podąża za trendem $O(N^3)$.](decomp_plot.pdf){#fig-decomp width=100% fig-pos='h'}
+
+W przeciwieństwie do tego, faza rozwiązywania (Rysunek \ref{fig-solve}) wykazuje kwadratowy trend wzrostu, pozostając znacznie szybszą niż faza dekompozycji, nawet w miarę wzrostu $N$.
+
+![Czas rozwiązywania układu w funkcji rozmiaru macierzy $N$. Trend jest zgodny ze złożonością $O(N^2)$.](solve_plot.pdf){#fig-solve width=100% fig-pos='h'}
+
+Aby rygorystycznie ocenić skalowanie, porównaliśmy wzrost czasu wykonania przy podwojeniu rozmiaru problemu $N$ z 500 do 1000:
+
+1.  **Faza Dekompozycji:**
+    $$\frac{T_{decomp}(1000)}{T_{decomp}(500)} = \frac{0.201480}{0.030898} \approx 6.52$$
+    Podczas gdy teoretyczne oczekiwanie dla złożoności sześciennej wynosi $2^3 = 8$, zaobserwowany stosunek jest nieco niższy. To odchylenie można prawdopodobnie przypisać optymalizacjom sprzętowym, takim jak efektywność pamięci podręcznej (cache) procesora, która może mieć bardziej wyraźny wpływ przy mniejszych rozmiarach macierzy ($N=500$) w porównaniu do większych. Niemniej jednak wzrost jest zdecydowanie ponadkwadratowy.
+
+2.  **Faza Rozwiązywania:**
+    $$\frac{T_{solve}(1000)}{T_{solve}(500)} = \frac{0.001222}{0.000285} \approx 4.29$$
+    Ten wynik jest bardzo zbliżony do teoretycznej prognozy dla złożoności kwadratowej ($2^2 = 4$).
+
+Rysunek \ref{fig-log} przedstawia połączony wykres logarytmiczny, podkreślający rosnącą przepaść między kosztami obliczeniowymi obu operacji.
+
+![Logarytmiczne porównanie czasów dekompozycji i rozwiązywania. Różnica nachyleń odpowiada różnicy w klasach złożoności.](combined_log_plot.pdf){#fig-log width=100% fig-pos='h'}
+
+## Wnioski
+
+Wyniki eksperymentalne potwierdzają teoretyczne szacunki złożoności dla algorytmów rozwiązywania układów liniowych omawiane w standardowej literaturze[@num_algo]. Krok dekompozycji LU dominuje w całkowitym koszcie obliczeniowym, skalując się jako $O(N^3)$, podczas gdy krok podstawiania skaluje się jako $O(N^2)$.
+
+Przy $N=1000$, dekompozycja trwa około 165 razy dłużej niż krok rozwiązywania. Potwierdza to standardową strategię numeryczną: jeśli trzeba rozwiązać wiele układów liniowych z tą samą macierzą współczynników $A$, ale różnymi wektorami $b$, obliczeniowo efektywne jest wykonanie dekompozycji LU raz i ponowne wykorzystanie faktoryzacji do szybkich rozwiązań $O(N^2)$.

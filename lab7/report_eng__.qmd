@@ -94,5 +94,3 @@ Figure \ref{fig-log} presents a combined logarithmic plot, highlighting the wide
 The experimental results confirm the theoretical complexity estimates for linear system solving algorithms discussed in standard literature[@num_algo]. The LU decomposition step dominates the total computational cost, scaling as $O(N^3)$, while the substitution step scales as $O(N^2)$.
 
 At $N=1000$, the decomposition takes approximately 165 times longer than the solving step. This validates the standard numerical strategy: if one needs to solve multiple linear systems with the same coefficient matrix $A$ but different vectors $b$, it is computationally efficient to perform the LU decomposition once and reuse the factorization for rapid $O(N^2)$ solutions.
-
-## References

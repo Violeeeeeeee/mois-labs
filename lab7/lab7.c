@@ -16,7 +16,7 @@ double calculate_time(struct rusage *ru0, struct rusage *ru1) {
 
 int main(int argc, char **argv) {
     if (argc != 2) {
-        fprintf(stderr, "Użycie: %s <rozmiar_macierzy_n>\n", argv[0]);
+        fprintf(stderr, "Used: %s <matrix_size_n>\n", argv[0]);
         return 1;
     }
 
