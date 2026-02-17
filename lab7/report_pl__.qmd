@@ -12,8 +12,8 @@ format:
 bibliography: bibliography.bib
 ---
 
-\title{Sprawozdanie: Analiza złożoności obliczeniowej algorytmów rozwiązywania układów równań liniowych metodą rozkładu LU}
-\titlerunning{Lab 7: Złożoność Rozkładu LU}
+\title{Sprawozdanie z laboratorium: Analiza złożoności obliczeniowej rozwiązywania układów równań liniowych metodą dekompozycji LU}
+\titlerunning{Lab 7: Złożoność Dekompozycji LU}
 
 \author{Vladyslav Humeniuk}
 \authorrunning{Vladyslav Humeniuk}
@@ -22,26 +22,26 @@ bibliography: bibliography.bib
 
 ## Wstęp
 
-Celem ćwiczenia była empiryczna weryfikacja teoretycznej złożoności obliczeniowej algorytmu rozwiązywania układów równań liniowych $Ax = b$ przy zastosowaniu rozkładu LU. [cite_start]Zgodnie z teorią, faktoryzacja nieosobliwej macierzy $A$ na macierze trójkątną dolną ($L$) i górną ($U$) wymaga wykonania około $\frac{2}{3}N^3$ operacji zmiennoprzecinkowych, co klasyfikuje ten algorytm w klasie złożoności $O(N^3)$[cite: 5]. Natomiast drugi etap procesu, polegający na rozwiązaniu układu metodą podstawiania w przód i wstecz, charakteryzuje się złożonością kwadratową $O(N^2)$.
+Celem niniejszego ćwiczenia była empiryczna weryfikacja teoretycznej złożoności obliczeniowej algorytmu rozwiązywania układów równań liniowych postaci $Ax = b$ z wykorzystaniem dekompozycji LU. Literatura przedmiotu wskazuje, że rozkład nieosobliwej macierzy $A$ na macierz dolnotrójkątną ($L$) i górnotrójkątną ($U$) wymaga wykonania około $\frac{2}{3}N^3$ operacji zmiennoprzecinkowych, co przekłada się na złożoność czasową rzędu $O(N^3)$[@num_algo]. Natomiast drugi etap procesu, czyli rozwiązanie układu metodą podstawiania (w przód i wstecz), charakteryzuje się złożonością $O(N^2)$.
 
-[cite_start]W niniejszym sprawozdaniu przedstawiono analizę wydajności obu etapów obliczeń z wykorzystaniem biblioteki *GNU Scientific Library* (GSL)[cite: 2], dla macierzy o wymiarach w przedziale $N \in [10, 1000]$.
+W sprawozdaniu przedstawiono analizę wydajności obu etapów algorytmu przy użyciu biblioteki *GNU Scientific Library* (GSL)[@gsl_ref]. Pomiary czasu wykonania przeprowadzono dla macierzy o wymiarach z przedziału od $N=10$ do $N=1000$.
 
 ## Metodyka
 
-[cite_start]Program testowy zaimplementowano w języku C, wykorzystując funkcje `gsl_linalg_LU_decomp` oraz `gsl_linalg_LU_solve` zgodnie z dokumentacją biblioteki[cite: 2]. Procedura pomiarowa przebiegała następująco:
+Program testowy zaimplementowano w języku C, wykorzystując funkcje biblioteczne GSL: `gsl_linalg_LU_decomp` oraz `gsl_linalg_LU_solve`, zgodnie z dokumentacją[@gsl_ref]. Procedura badawcza obejmowała następujące kroki:
 
-1.  **Generowanie danych:** Dla każdego rozmiaru $N$, macierz $A$ oraz wektor $b$ wypełniono liczbami losowymi z rozkładu jednostajnego.
-2.  **Rozkład macierzy:** Zmierzono czas operacji faktoryzacji LU.
-3.  **Rozwiązywanie układu:** Zmierzono czas wyznaczenia wektora wynikowego $x$ przy użyciu wcześniej obliczonego rozkładu.
+1.  **Generacja danych:** Dla każdego badanego wymiaru $N \in [10, 1000]$, macierz $A$ oraz wektor $b$ wypełniono losowymi wartościami o rozkładzie jednostajnym.
+2.  **Dekompozycja:** Zmierzono czas operacji faktoryzacji LU macierzy $A$.
+3.  **Rozwiązywanie:** Zmierzono czas wyznaczenia wektora wynikowego $x$ na podstawie wcześniejszego rozkładu.
 4.  **Weryfikacja:** Poprawność wyniku sprawdzono poprzez obliczenie normy euklidesowej wektora residuum $r = ||Ax - b||$.
 
-Do pomiaru czasu wykorzystano funkcję systemową `getrusage()`, sumującą czas procesora w trybie użytkownika i systemu, co zapewnia wysoką precyzję pomiaru.
+Do pomiaru czasu wykorzystano funkcję systemową `getrusage()`, sumującą czas użytkownika i systemowy, co pozwoliło na uzyskanie precyzji mikrosekundowej.
 
 \newpage
 
 ## Wyniki
 
-Uzyskane wyniki pomiarów zestawiono w Tabeli \ref{tbl-results}. [cite_start]Wartości błędu rezydualnego we wszystkich próbach oscylowały w granicach precyzji maszynowej ($10^{-10}$ do $10^{-13}$), co potwierdza numeryczną stabilność algorytmu zaimplementowanego w GSL[cite: 2].
+Zestawienie uzyskanych czasów wykonania oraz błędów numerycznych zaprezentowano w Tabeli \ref{tbl-results}. Wartości błędu residuum dla wszystkich prób oscylowały w granicach precyzji maszynowej ($10^{-10}$ do $10^{-13}$), co potwierdza poprawność i stabilność numeryczną zastosowanych metod[@gsl_ref].
 
 ::: {#tbl-results tbl-pos='h'}
 ```{=latex}
@@ -49,7 +49,7 @@ Uzyskane wyniki pomiarów zestawiono w Tabeli \ref{tbl-results}. [cite_start]War
 \centering
 \begin{tabular}{|r|r|r|r|}
 \hline
-$N$ & Czas rozkładu [s] & Czas rozwiązywania [s] & Błąd $||Ax-b||$ \\
+$N$ & Czas dekompozycji [s] & Czas rozwiązywania [s] & Błąd $||Ax-b||$ \\
 \hline
 10 & 0.000206 & 0.000026 & $5.68 \times 10^{-13}$ \\
 100 & 0.001146 & 0.000061 & $3.93 \times 10^{-12}$ \\
@@ -61,35 +61,36 @@ $N$ & Czas rozkładu [s] & Czas rozwiązywania [s] & Błąd $||Ax-b||$ \\
 \end{tabular}
 \end{table}
 ```
-Zestawienie czasów wykonania oraz błędów dla wybranych rozmiarów macierzy.
+
+Czasy wykonania i błędy rezydualne dla wybranych rozmiarów macierzy.
 :::
 
-### Analiza złożoności
+### Analiza złożoności obliczeniowej
 
-Dane pomiarowe wyraźnie obrazują dysproporcję w tempie wzrostu kosztów obliczeniowych obu badanych operacji. [cite_start]Na Rysunku \ref{fig-decomp} przedstawiono czas rozkładu macierzy, który wykazuje trend sześcienny, zgodny z przewidywaniami teoretycznymi[cite: 5].
+Otrzymane wyniki jednoznacznie ukazują dysproporcję w tempie wzrostu kosztu obliczeniowego obu operacji. Na Rysunku \ref{fig-decomp} przedstawiono czas dekompozycji, który wykazuje charakterystyczny dla złożoności $O(N^3)$ trend sześcienny[@num_algo].
 
-![Zależność czasu rozkładu LU od rozmiaru macierzy $N$. Widoczny trend sześcienny $O(N^3)$.](decomp_plot.pdf){#fig-decomp width=100% fig-pos='h'}
+![Zależność czasu dekompozycji LU od rozmiaru macierzy $N$. Widoczny trend wzrostu rzędu $O(N^3)$.](decomp_plot.pdf){#fig-decomp width=100% fig-pos='h'}
 
-Z kolei czas rozwiązywania układu (Rysunek \ref{fig-solve}) rośnie w tempie kwadratowym, pozostając o rzędy wielkości mniejszym od czasu faktoryzacji, nawet dla dużych wartości $N$.
+Z kolei czas rozwiązywania układu (Rysunek \ref{fig-solve}) rośnie w tempie kwadratowym. Nawet dla dużych wartości $N$, operacja ta pozostaje rzędy wielkości szybsza niż sama faktoryzacja.
 
 ![Zależność czasu rozwiązywania układu od rozmiaru macierzy $N$. Trend zgodny ze złożonością $O(N^2)$.](solve_plot.pdf){#fig-solve width=100% fig-pos='h'}
 
-W celu ilościowej oceny skalowalności algorytmu, przeanalizowano stosunek czasów wykonania przy dwukrotnym zwiększeniu rozmiaru problemu (z $N=500$ do $N=1000$):
+Aby precyzyjnie ocenić skalowalność algorytmu, porównano wzrost czasu wykonania przy dwukrotnym zwiększeniu rozmiaru problemu (z $N=500$ do $N=1000$):
 
-1.  **Etap rozkładu (Dekompozycja):**
+1.  **Etap dekompozycji:**
     $$\frac{T_{decomp}(1000)}{T_{decomp}(500)} = \frac{0.201480}{0.030898} \approx 6.52$$
-    Teoretyczny przyrost dla złożoności sześciennej wynosi $2^3 = 8$. Otrzymany wynik jest niższy, co najprawdopodobniej wynika z uwarunkowań sprzętowych, takich jak efektywność pamięci podręcznej (cache) procesora, która ma istotniejszy wpływ przy mniejszych macierzach. Mimo to, wzrost jest wyraźnie ponadkwadratowy.
+    Teoretycznie, dla złożoności sześciennej oczekiwany współczynnik wzrostu wynosi $2^3 = 8$. Uzyskany wynik (ok. 6.5) jest niższy, co najprawdopodobniej wynika z mechanizmów optymalizacyjnych procesora (np. efektywniejsze wykorzystanie pamięci cache przy mniejszych macierzach). Mimo to, wzrost jest wyraźnie ponadkwadratowy.
 
 2.  **Etap rozwiązywania:**
     $$\frac{T_{solve}(1000)}{T_{solve}(500)} = \frac{0.001222}{0.000285} \approx 4.29$$
     Wynik ten jest bardzo zbliżony do wartości teoretycznej dla złożoności kwadratowej ($2^2 = 4$).
 
-Rysunek \ref{fig-log} w skali logarytmicznej wizualizuje rosnącą różnicę pomiędzy nakładem obliczeniowym obu operacji.
+Rysunek \ref{fig-log} w skali logarytmicznej obrazuje powiększającą się różnicę między nakładem obliczeniowym obu faz procesu.
 
-![Porównanie czasów w skali logarytmicznej. Różne nachylenie krzywych odpowiada różnym rzędom złożoności.](combined_log_plot.pdf){#fig-log width=100% fig-pos='h'}
+![Porównanie czasów dekompozycji i rozwiązywania w skali logarytmicznej. Różne nachylenia krzywych odpowiadają różnym klasom złożoności.](combined_log_plot.pdf){#fig-log width=100% fig-pos='h'}
 
 ## Wnioski
 
-[cite_start]Przeprowadzone badania eksperymentalne potwierdzają teoretyczne oszacowania złożoności algorytmów algebry liniowej[cite: 5]. Koszt rozkładu LU dominuje nad kosztem rozwiązania układu, rosnąc sześciennie ($O(N^3)$), podczas gdy samo wyznaczenie wyniku skaluje się kwadratowo ($O(N^2)$).
+Przeprowadzone eksperymenty w pełni potwierdzają teoretyczne założenia dotyczące złożoności algorytmów algebry liniowej[@num_algo]. Koszt dekompozycji LU ($O(N^3)$) dominuje nad kosztem rozwiązania układu ($O(N^2)$), co staje się szczególnie widoczne wraz ze wzrostem wymiaru zadania.
 
-Dla $N=1000$ czas dekompozycji jest ok. 165 razy dłuższy niż czas rozwiązania układu. Potwierdza to efektywność standardowej strategii numerycznej: w przypadku rozwiązywania wielu układów z tą samą macierzą główną $A$, ale różnymi wektorami $b$, należy wykonać rozkład LU tylko raz, a następnie wielokrotnie wykorzystywać go do szybkiego wyznaczania rozwiązań.
+Dla $N=1000$, proces dekompozycji trwał około 165 razy dłużej niż samo wyznaczenie wyniku. Uzasadnia to powszechnie stosowaną strategię numeryczną: w przypadku konieczności rozwiązania wielu układów z tą samą macierzą główną $A$, ale różnymi wektorami wyrazów wolnych $b$, najbardziej efektywnym podejściem jest jednokrotne wykonanie dekompozycji, a następnie wielokrotne wykorzystanie uzyskanej faktoryzacji do szybkiego ($O(N^2)$) wyznaczania rozwiązań.
