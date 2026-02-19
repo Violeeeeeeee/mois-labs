@@ -1,0 +1,84 @@
+---
+format:
+  pdf:
+    documentclass: llncs
+    classoption: runningheads
+    pdf-engine: pdflatex
+    cite-method: natbib
+    biblio-style: splncs04
+    natbiboptions: "numbers,sort,compress,sectionbib"
+    number-sections: true
+    number-depth: 3
+bibliography: bibliography.bib
+---
+
+\title{Lab 9: Fast Fourier Transform (FFT)}
+\titlerunning{Lab 9: FFT Analysis}
+
+\author{Vladyslav Humeniuk}
+\authorrunning{Vladyslav Humeniuk}
+\institute{}
+\maketitle
+
+## Introduction {#sec-intro}
+
+Celem niniejszego laboratorium było zapoznanie się z podstawowymi możliwościami przetwarzania danych za pomocą transformat Fouriera, w szczególności w kontekście *signal and sound processing*. Wykorzystując *GNU Scientific Library* (GSL), empirycznie zweryfikowaliśmy działanie *Fast Fourier Transform* (FFT) zarówno do analizy sygnału, jak i redukcji szumu. *Discrete Fourier Transform* (DFT) pozwala nam na dekompozycję sygnałów w *time domain* na składowe częstotliwości, co jest fundamentalną techniką dla zadań takich jak *audio filtering*, które są trudne do wykonania bezpośrednio w dziedzinie czasu. Niniejsze sprawozdanie szczegółowo opisuje proces generowania sygnału, *spectral analysis* oraz usuwania szumu poprzez *forward* i *inverse transforms*.
+
+## Methodology
+
+Zadania obliczeniowe zostały podzielone na sześć etapów, zgodnie z wymaganiami laboratoryjnymi:
+
+1. **Signal Generation**: Synteza 256-elementowej tablicy reprezentującej sumę czterech cosinusów o różnych okresach i amplitudach.
+2. **Spectral Analysis**: Ekstrakcja *frequency spectrum* przy użyciu funkcji `gsl_fft_real_radix2_transform`.
+3. **Noisy Signal Simulation**: Zaburzenie prostego sygnału cosinusowego losowym *white noise*.
+4. **Noise Spectrum Visualization**: Użycie FFT do analizy rozkładu częstotliwości stochastycznych zakłóceń.
+5. **Frequency Filtering**: Implementacja *threshold filter* w celu wyzerowania składowych widmowych (*spectral components*) o magnitudzie poniżej 50.
+6. **Inverse Transform**: Rekonstrukcja sygnału przy użyciu funkcji `gsl_fft_halfcomplex_radix2_inverse`.
+
+\newpage
+
+## Results
+
+### Task 1: Generated Signal
+Jak pokazano na Rys. \ref{fig-signal}, początkowy sygnał złożony składa się z czterech składowych cosinusoidalnych. Wykazuje on złożoną strukturę okresową, w której *high-frequency ripples* nakładają się na główną falę.
+
+![Wygenerowany wieloskładowy sygnał cosinusoidalny.](1_signal.pdf){#fig-signal width=100% fig-pos='H'}
+
+\newpage
+
+### Task 2: Frequency Spectrum
+Wyniki FFT na Rys. \ref{fig-spectrum} ujawniają cztery wyraźne piki w *frequency domain*. Piki te odpowiadają dokładnie współczynnikom 4, 16, 32 i 128 używanym podczas *signal generation*.
+
+![Frequency spectrum pokazujące wyraźne piki dla każdej składowej sygnału.](2_spectrum.pdf){#fig-spectrum width=100% fig-pos='H'}
+
+\newpage
+
+### Task 3: Noisy Signal
+Dodanie losowego szumu, zwizualizowane na Rys. \ref{fig-noisy-sig}, skutkuje poszarpaną funkcją w *time domain*. Główna oscylacja jest przesłonięta przez gwałtowne, nieprzewidywalne fluktuacje.
+
+![Sygnał przesłonięty przez losowy white noise.](3_noisy_signal.pdf){#fig-noisy-sig width=100% fig-pos='H'}
+
+\newpage
+
+### Task 4: Spectrum of Noisy Signal
+W *frequency domain*, szum objawia się jako szeroki *noise floor* składowych o niskiej magnitudzie otaczających główny pik sygnału, jak widać na Rys. \ref{fig-noisy-spec}.
+
+![Frequency spectrum zaszumionego sygnału ukazujące szerokopasmowe zakłócenia.](4_noisy_spectrum.pdf){#fig-noisy-spec width=100% fig-pos='H'}
+
+\newpage
+
+### Task 5: Threshold Filtering
+Poprzez wyzerowanie wszystkich składowych o magnitudzie mniejszej niż 50 (Rys. \ref{fig-filtered-spec}), wyeliminowano *random noise floor*. Proces ten zachowuje jedynie pik sygnału o wysokiej magnitudzie.
+
+![Przefiltrowane spectrum po usunięciu noise floor.](5_filtered_spectrum.pdf){#fig-filtered-spec width=100% fig-pos='H'}
+
+\newpage
+
+### Task 6: Reconstructed Signal
+*Inverse transform* generuje wygładzoną falę przedstawioną na Rys. \ref{fig-inversion}. Ten zrekonstruowany sygnał z powodzeniem odzyskuje oryginalną okresowość i pozbawiony jest *high-frequency spikes* obecnych w zaszumionym sygnale wejściowym.
+
+![Wygładzony sygnał zrekonstruowany po usunięciu szumu i wykonaniu inverse FFT.](6_inverse_signal.pdf){#fig-inversion width=100% fig-pos='H'}
+
+## Conclusion
+
+Laboratorium z powodzeniem zademonstrowało użyteczność *Fast Fourier Transform* w dziedzinie *digital signal and sound processing* [@gsl_fft_doc]. Użyliśmy *forward transforms* do identyfikacji konkretnych częstotliwości wewnątrz złożonego sygnału oraz zaimplementowaliśmy *threshold filter* w *frequency domain* jako skuteczną metodę dla *noise reduction*. Końcowy zrekonstruowany sygnał potwierdza, że *spectral filtering* potrafi usunąć znaczące losowe zakłócenia, zachowując jednocześnie kluczowe cechy oryginalnych danych [@fft_theory].

@@ -12,66 +12,56 @@ format:
 bibliography: bibliography.bib
 ---
 
-\title{Sprawozdanie z laboratorium 8: Całkowanie metodą Monte Carlo}
-\titlerunning{Lab 8: Monte Carlo}
+\title{Lab 9: Fast Fourier Transform (FFT)}
+\titlerunning{Lab 9: FFT Analysis}
 
 \author{Vladyslav Humeniuk}
 \authorrunning{Vladyslav Humeniuk}
 \institute{}
 \maketitle
 
-## Wstęp {#sec-intro}
+## Introduction {#sec-intro}
 
-Celem niniejszego laboratorium była empiryczna weryfikacja metod Monte Carlo do całkowania numerycznego. Ćwiczenie skupia się na obliczeniu całki oznaczonej trzech konkretnych funkcji w przedziale $(0, 1)$: $f_1(x) = x^2 + x + 1$, $f_2(x) = \sqrt{1 - x^2}$ oraz $f_3(x) = \frac{1}{\sqrt{x}}$.
+The objective of this laboratory was the empirical verification of the Fast Fourier Transform (FFT) for signal analysis and noise reduction using the GNU Scientific Library (GSL). [cite_start]The Discrete Fourier Transform (DFT) is an essential mathematical tool for decomposing a time-domain signal into its constituent frequency components[cite: 21]. [cite_start]This report details the complete experimental process, including multi-component signal generation, spectral analysis, and the application of frequency-domain filtering to remediate stochastic noise[cite: 21].
 
-Badanie porównuje podstawowy algorytm Hit-and-Miss z zaawansowanymi wielowymiarowymi procedurami całkowania dostarczanymi przez *GNU Scientific Library*: PLAIN, MISER i VEGAS [@gsl_monte]. Standardowe metody Monte Carlo opierają się na losowym próbkowaniu w celu przybliżenia całek [@mathworld_mc], przy czym teoretyczne oszacowanie błędu maleje proporcjonalnie do $1/\sqrt{N}$, gdzie $N$ jest całkowitą liczbą punktów próbkowania. Jakość tych metod numerycznych zależy zasadniczo od zastosowanych generatorów liczb pseudolosowych [@taygeta_rng].
+## Methodology
 
-## Metodyka
+[cite_start]The computational procedure was structured into six distinct tasks as defined in the laboratory requirements[cite: 17, 21]:
 
-Procedura obliczeniowa została podzielona na dwa główne podejścia. Pierwsze podejście obejmowało metodę Hit-and-Miss, która wymaga zdefiniowania skończonego prostokątnego obszaru ograniczającego, który w pełni zamyka funkcję. Chociaż to podejście geometryczne działa poprawnie dla funkcji ograniczonych, takich jak $f_1(x)$ (ograniczona przez $y_{max}=3$) i $f_2(x)$ (ograniczona przez $y_{max}=1$), z natury zawodzi dla $f_3(x) = 1/\sqrt{x}$. Ponieważ funkcja dąży do nieskończoności dla $x \to 0$, niemożliwe jest ustalenie prawdziwej maksymalnej granicy wymaganej do wygenerowania jednorodnych współrzędnych losowych. Aby empirycznie zademonstrować to niepowodzenie, podczas wykonywania metody Hit-and-Miss dla $f_3(x)$ zastosowano arbitralnie wysokie odcięcie $y_{max}=1000$.
+1.  [cite_start]**Signal Generation**: Synthesis of a 256-element array representing a sum of four cosine functions with varying periods ($k=2, 8, 16, 64$) and amplitudes ($1, 1/5, 1/8, 1/16$)[cite: 17, 21].
+2.  [cite_start]**Spectral Analysis**: Extraction of the frequency spectrum using the `gsl_fft_real_radix2_transform` routine[cite: 17, 18, 21].
+3.  [cite_start]**Noisy Signal Simulation**: Generation of a cosine wave corrupted by random white noise using a standard pseudo-random number generator[cite: 17, 21].
+4.  [cite_start]**Noise Spectrum Analysis**: FFT application to visualize the wide-band frequency distribution of the interference[cite: 17, 21].
+5.  [cite_start]**Frequency Filtering**: Implementation of a magnitude-based threshold filter to zero out spectral components with an absolute value below 50[cite: 17, 21].
+6.  [cite_start]**Inverse Transform**: Signal reconstruction using the `gsl_fft_halfcomplex_radix2_inverse` function to evaluate filtering efficiency[cite: 17, 18, 21].
 
-Drugie podejście wykorzystywało zaawansowane numeryczne procedury całkowania do oceny wszystkich trzech funkcji. Algorytmy te są zaprojektowane w taki sposób, że losowe punkty próbkowania są ściśle wybierane w obszarze całkowania, automatycznie unikając osobliwości na końcach przedziału [@gsl_monte]. Metoda PLAIN wykonuje standardowe jednorodne próbkowanie nad obszarem. W celu znacznej poprawy zbieżności stosowane są techniki redukcji wariancji: algorytm MISER wykorzystuje rekurencyjne próbkowanie warstwowe, aby skoncentrować punkty w obszarach o największej wariancji, podczas gdy algorytm VEGAS wykorzystuje próbkowanie warunkowe (importance sampling), dostosowując swój rozkład prawdopodobieństwa do zachowania funkcji podcałkowej [@gsl_monte].
+## Results
 
-## Wyniki
+### Signal Decomposition (Tasks 1 & 2)
+[cite_start]The initial composite signal demonstrates a complex periodic structure resulting from the superposition of four cosine waves[cite: 17, 21, 23]. Figure \ref{fig-signal} illustrates the high-frequency ripples superimposed on the primary low-frequency oscillation.
 
-### Hit-and-Miss Convergence
+[cite_start]![Composite cosine signal generated in the time domain[cite: 17, 21].](1_signal.pdf){#fig-signal width=100% fig-pos='h'}
 
-Rysunek \ref{fig-hitmiss} przedstawia zbieżność błędu bezwzględnego dla algorytmu Hit-and-Miss w skali logarytmicznej.
+The frequency spectrum obtained via FFT (Figure \ref{fig-spectrum}) clearly identifies the constituent components. [cite_start]Four distinct peaks are visible at indices corresponding to the input frequencies ($k=2, 8, 16, 64$), with magnitudes of approximately 128.0, 25.6, 16.0, and 8.0, respectively, which align with the theoretical amplitudes[cite: 17, 21, 24].
 
-![Hit-and-Miss Integration Error vs. Number of Trials](hit_and_miss_error.pdf){#fig-hitmiss width=100% fig-pos='h'}
+[cite_start]![Frequency spectrum identifying the four primary signal components[cite: 17, 21].](2_spectrum.pdf){#fig-spectrum width=100% fig-pos='h'}
 
-Dane wykazują stałą tendencję spadkową dla $f_1$ i $f_2$, co jest wysoce spójne z teoretycznym skalowaniem błędu Monte Carlo $O(1/\sqrt{N})$. Jednakże dla $f_3(x)$ metoda daje wysoce niedokładne wyniki niezależnie od liczby prób. Arbitralny obszar ograniczający ucina asymptotę, uniemożliwiając algorytmowi uwzględnienie obszaru pod osobliwością.
+### Noise Remediation (Tasks 3, 4, & 5)
+[cite_start]The introduction of random white noise produced a jagged time-domain function, partially obscuring the underlying wave structure (Figure \ref{fig-noisy-sig})[cite: 17, 21, 25]. [cite_start]In the frequency domain, this interference manifested as a broad noise floor distributed across nearly the entire spectral range (Figure \ref{fig-noisy-spec})[cite: 17, 21, 26].
 
-### GSL Methods Comparison
+[cite_start]![Signal corrupted by random white noise[cite: 17, 21].](3_noisy_signal.pdf){#fig-noisy-sig width=100% fig-pos='h'}
 
-Tabela \ref{tbl-gsl-summary} podsumowuje błędy całkowania dla wszystkich trzech funkcji przy wykorzystaniu strategii PLAIN, MISER i VEGAS przy maksymalnej testowanej rozdzielczości ($N = 500 000$).
+[cite_start]![Spectrum of the corrupted signal showing the noise floor[cite: 17, 21].](4_noisy_spectrum.pdf){#fig-noisy-spec width=100% fig-pos='h'}
 
-\newpage
+[cite_start]By applying a magnitude threshold of 50, the noise floor was eliminated, leaving only the primary signal peak intact (Figure \ref{fig-filtered-spec})[cite: 17, 21, 19].
 
-![Error vs. Number of Function Calls for $f_1(x)$, $f_2(x)$, $f_3(x)$.](gsl_methods_error_combined.pdf){#fig-gsl1 width=100% fig-pos='h'}
+[cite_start]![Filtered spectrum after zeroing components below the threshold of 50[cite: 17, 21].](5_filtered_spectrum.pdf){#fig-filtered-spec width=100% fig-pos='h'}
 
-\newpage
+### Reconstructed Signal (Task 6)
+[cite_start]The reconstructed signal after inverse FFT (Figure \ref{fig-inversion}) is significantly smoothed compared to the noisy input[cite: 17, 21, 20]. [cite_start]The periodicity is recovered, and the function is confined to the expected $[-1, 1]$ amplitude range, demonstrating successful noise removal through frequency-domain filtering[cite: 17, 21].
 
-::: {#tbl-gsl-summary tbl-pos='h'}
-\begin{table}
-\centering
-\begin{tabular}{|l|c|c|c|}
-\hline
-Function & PLAIN Error & MISER Error & VEGAS Error \\
-\hline
-$f_1(x) = x^2 + x + 1$ & $8.77 \times 10^{-5}$ & $3.41 \times 10^{-6}$ & $1.27 \times 10^{-9}$ \\
-$f_2(x) = \sqrt{1 - x^2}$ & $2.15 \times 10^{-5}$ & $2.73 \times 10^{-7}$ & $4.26 \times 10^{-10}$ \\
-$f_3(x) = 1/\sqrt{x}$ & $7.51 \times 10^{-5}$ & $2.84 \times 10^{-4}$ & $5.83 \times 10^{-6}$ \\
-\hline
-\end{tabular}
-\end{table}
-Final absolute errors at $N = 500,000$ function calls for all tested GSL methods.
-:::
+[cite_start]![Smoothed signal reconstructed from the filtered spectrum[cite: 17, 21].](6_inverse_signal.pdf){#fig-inversion width=100% fig-pos='h'}
 
-Wyniki podkreślają ogromny wpływ technik redukcji wariancji, Rysunek \ref{fig-gsl1}. Dla funkcji gładkich ($f_1$ i $f_2$) algorytm VEGAS osiąga niezwykłą precyzję (do $10^{-10}$), całkowicie deklasując metodę jednorodnego próbkowania PLAIN.
+## Conclusion
 
-Dla funkcji nieograniczonej $f_3(x)$, standardowe próbkowanie jednorodne (PLAIN) i próbkowanie warstwowe (MISER) zmagają się ze znacznymi trudnościami z powodu skrajnej wariancji w pobliżu $x=0$. Jednak algorytm VEGAS skutecznie łagodzi ten problem, dostosowując swoją siatkę próbkowania do ostrego piku funkcji podcałkowej, osiągając błąd rzędu $5.83 \times 10^{-6}$, co dowodzi jego odporności na całkować osobliwości.
-
-## Wnioski
-
-Przeprowadzone eksperymenty potwierdzają teoretyczne zasady i ograniczenia całkowania metodą Monte Carlo. Podstawowa metoda Hit-and-Miss zapewnia intuicyjne i poprawne wyniki, ale jest ściśle ograniczona do funkcji ograniczonych. Zaawansowane procedury całkowania skutecznie radzą sobie z osobliwościami na końcach przedziałów poprzez bezpieczne ograniczenie przestrzeni próbek. Ponadto, techniki redukcji wariancji mają kluczowe znaczenie dla wydajności obliczeniowej. Algorytm VEGAS, wykorzystujący próbkowanie warunkowe, okazał się wysoce lepszy we wszystkich testowanych scenariuszach, wymagając znacznie mniejszej liczby iteracji, aby osiągnąć wysoki stopień precyzji w porównaniu do jednorodnego próbkowania losowego lub podstawowej stratyfikacji.
+The laboratory results confirm that the Fast Fourier Transform is a robust method for analyzing multi-component signals and implementing noise-reduction filters [@gsl_fft_doc]. By utilizing adaptive spectral thresholding, stochastic interference can be effectively isolated from the primary data [@fft_theory]. Reconstructing the filtered signal confirms that frequency-domain manipulation preserves the essential periodic characteristics of the original wave while removing high-frequency disturbances.
