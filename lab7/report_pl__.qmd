@@ -33,13 +33,13 @@ Program testowy zaimplementowano w języku C, wykorzystując funkcje biblioteczn
 1.  **Generacja danych:** Dla każdego badanego wymiaru $N \in [10, 1000]$, macierz $A$ oraz wektor $b$ wypełniono losowymi wartościami z wykorzystaniem struktur wektorów i macierzy GSL[@gsl_vectors].
 2.  **Dekompozycja:** Zmierzono czas operacji faktoryzacji LU macierzy $A$.
 3.  **Rozwiązywanie:** Zmierzono czas wyznaczenia wektora wynikowego $x$ na podstawie wcześniejszego rozkładu.
-4.  **Weryfikacja:** Poprawność wyniku sprawdzono poprzez obliczenie normy euklidesowej wektora residuum $r = ||Ax - b||$, wykorzystując operacje BLAS poziomu 2 dostępne w GSL[@gsl_blas].
+4.  **Weryfikacja:** Poprawność wyniku sprawdzono poprzez obliczenie normy euklidesowej wektora residuum $r = ||Ax - b||$, wykorzystując operacje BLAS poziomu 2 dostępne w GSL[@gsl_blas, @blas_ops].
 
 Do pomiaru czasu wykorzystano funkcję systemową `getrusage()`, sumującą czas użytkownika i systemowy, co pozwoliło na uzyskanie precyzji mikrosekundowej.
 
 ## Wyniki
 
-Zestawienie uzyskanych czasów wykonania oraz błędów numerycznych zaprezentowano w Tabeli \ref{tbl-results}. Wartości błędu residuum dla wszystkich prób oscylowały w granicach precyzji maszynowej ($10^{-10}$ do $10^{-13}$), co potwierdza poprawność i stabilność numeryczną zastosowanych metod[@gsl_linalg].
+Zestawienie uzyskanych czasów wykonania oraz błędów numerycznych zaprezentowano w Tabeli \ref{tbl-results}. Wartości błędu residuum dla wszystkich prób oscylowały w granicach precyzji maszynowej ($10^{-9}$ do $10^{-14}$), co potwierdza poprawność i stabilność numeryczną zastosowanych metod[@gsl_linalg].
 
 ::: {#tbl-results tbl-pos='h'}
 ```{=latex}
@@ -49,12 +49,12 @@ Zestawienie uzyskanych czasów wykonania oraz błędów numerycznych zaprezentow
 \hline
 $N$ & Decomposition Time [s] & Solving Time [s] & Error $||Ax-b||$ \\
 \hline
-10 & 0.000206 & 0.000026 & $5.68 \times 10^{-13}$ \\
-100 & 0.001146 & 0.000061 & $3.93 \times 10^{-12}$ \\
-500 & 0.030898 & 0.000285 & $1.83 \times 10^{-10}$ \\
-600 & 0.045422 & 0.000410 & $2.04 \times 10^{-09}$ \\
-800 & 0.104717 & 0.000754 & $2.00 \times 10^{-10}$ \\
-1000 & 0.201480 & 0.001222 & $1.20 \times 10^{-09}$ \\
+10 & 0.000024 & 0.000009 & $3.2171 \times 10^{-14}$ \\
+100 & 0.000875 & 0.000049 & $4.7298 \times 10^{-12}$ \\
+500 & 0.031188 & 0.000335 & $5.7555 \times 10^{-10}$ \\
+600 & 0.057770 & 0.000595 & $8.4344 \times 10^{-11}$ \\
+800 & 0.117500 & 0.000861 & $3.4065 \times 10^{-10}$ \\
+1000 & 0.234349 & 0.001321 & $1.0893 \times 10^{-09}$ \\
 \hline
 \end{tabular}
 \end{table}
@@ -78,12 +78,12 @@ Aby precyzyjnie ocenić skalowalność algorytmu, porównano wzrost czasu wykona
 \newpage
 
 1.  **Etap dekompozycji:**
-    $$\frac{T_{decomp}(1000)}{T_{decomp}(500)} = \frac{0.201480}{0.030898} \approx 6.52$$
-    Teoretycznie, dla złożoności sześciennej oczekiwany współczynnik wzrostu wynosi $2^3 = 8$. Uzyskany wynik (ok. 6.5) jest niższy, co najprawdopodobniej wynika z mechanizmów optymalizacyjnych procesora (np. efektywniejsze wykorzystanie pamięci cache przy mniejszych macierzach). Mimo to, wzrost jest wyraźnie ponadkwadratowy.
+    $$\frac{T_{decomp}(1000)}{T_{decomp}(500)} = \frac{0.234349}{0.031188} \approx 7.51$$
+    Teoretycznie, dla złożoności sześciennej oczekiwany współczynnik wzrostu wynosi $2^3 = 8$. Uzyskany wynik (ok. 7.51) jest bardzo bliski wartości teoretycznej, co potwierdza sześcienną naturę algorytmu. Niewielkie odchylenie wynika prawdopodobnie z narzutów systemowych i zarządzania pamięcią, które mają relatywnie większy wpływ przy mniejszych wymiarach macierzy.
 
 2.  **Etap rozwiązywania:**
-    $$\frac{T_{solve}(1000)}{T_{solve}(500)} = \frac{0.001222}{0.000285} \approx 4.29$$
-    Wynik ten jest bardzo zbliżony do wartości teoretycznej dla złożoności kwadratowej ($2^2 = 4$).
+    $$\frac{T_{solve}(1000)}{T_{solve}(500)} = \frac{0.001321}{0.000335} \approx 3.94$$
+    Wynik ten jest niemal identyczny z wartością teoretyczną dla złożoności kwadratowej ($2^2 = 4$).
 
 Rysunek \ref{fig-log} w skali logarytmicznej obrazuje powiększającą się różnicę między nakładem obliczeniowym obu faz procesu.
 
@@ -93,4 +93,4 @@ Rysunek \ref{fig-log} w skali logarytmicznej obrazuje powiększającą się ró�
 
 Przeprowadzone eksperymenty w pełni potwierdzają teoretyczne założenia dotyczące złożoności algorytmów algebry liniowej omówione w materiałach dydaktycznych[@lu_decomp]. Koszt dekompozycji LU ($O(N^3)$) dominuje nad kosztem rozwiązania układu ($O(N^2)$), co staje się szczególnie widoczne wraz ze wzrostem wymiaru zadania.
 
-Dla $N=1000$, proces dekompozycji trwał około 165 razy dłużej niż samo wyznaczenie wyniku. Uzasadnia to powszechnie stosowaną strategię numeryczną: w przypadku konieczności rozwiązania wielu układów z tą samą macierzą główną $A$, ale różnymi wektorami wyrazów wolnych $b$, najbardziej efektywnym podejściem jest jednokrotne wykonanie dekompozycji, a następnie wielokrotne wykorzystanie uzyskanej faktoryzacji do szybkiego ($O(N^2)$) wyznaczania rozwiązań.
+Dla $N=1000$, proces dekompozycji trwał około 177 razy dłużej niż samo wyznaczenie wyniku. Uzasadnia to powszechnie stosowaną strategię numeryczną: w przypadku konieczności rozwiązania wielu układów z tą samą macierzą główną $A$, ale różnymi wektorami wyrazów wolnych $b$, najbardziej efektywnym podejściem jest jednokrotne wykonanie dekompozycji, a następnie wielokrotne wykorzystanie uzyskanej faktoryzacji do szybkiego ($O(N^2)$) wyznaczania rozwiązań.
