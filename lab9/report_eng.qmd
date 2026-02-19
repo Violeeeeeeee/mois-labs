@@ -1,0 +1,57 @@
+---
+format:
+  pdf:
+    documentclass: llncs
+    classoption: runningheads
+    pdf-engine: pdflatex
+    cite-method: natbib
+    biblio-style: splncs04
+    natbiboptions: "numbers,sort,compress,sectionbib"
+    number-sections: true
+    number-depth: 3
+bibliography: bibliography.bib
+---
+
+\title{Lab 9: Digital Signal Processing via Fast Fourier Transform}
+\titlerunning{Lab 9: FFT Analysis and Noise Reduction}
+
+\author{Vladyslav Humeniuk}
+\authorrunning{Vladyslav Humeniuk}
+\institute{}
+\maketitle
+
+## Introduction {#sec-intro}
+
+The objective of this laboratory was the empirical verification of the Fast Fourier Transform (FFT) for signal analysis and noise reduction using the GNU Scientific Library (GSL). The Discrete Fourier Transform (DFT) is a fundamental mathematical tool that facilitates the decomposition of a time-domain signal into its constituent frequency components. This decomposition is essential for identifying periodicities within complex data and for performing frequency-domain operations, such as low-pass filtering, which are often computationally complex or imprecise when attempted directly in the time domain. This report details the full experimental cycle, encompassing signal generation, spectral analysis, and the implementation of noise filters via forward and inverse transformations.
+
+## Methodology
+
+The research procedure was organized into six distinct developmental stages as outlined in the assignment documentation. Initially, a discrete signal was synthesized by summing four cosine functions with varying periods and amplitudes to create a 256-element composite array. The specific periodicities used were $k=2, 8, 16,$ and $64$ (where $k$ represents frequency relative to the sampling period). The `gsl_fft_real_radix2_transform` function was then employed to perform a radix-2 FFT, shifting the signal into the frequency domain to evaluate its spectral density.
+
+Following the baseline analysis, a secondary experiment focused on noise remediation was conducted. A primary signal was generated using a simple cosine wave, which was subsequently corrupted by a stochastic "noise" component calculated as $\frac{rand}{RAND\_MAX \cdot 8.0}$. To remediate this interference, a threshold filter was implemented to zero out all spectral elements with a magnitude below 50. Finally, the filtered data was returned to the time domain using the `gsl_fft_halfcomplex_radix2_inverse` routine to evaluate the fidelity of the reconstructed signal.
+
+## Results
+
+### Composite Signal and Spectral Density
+The initial composite signal, illustrated in Figure \ref{fig-signal}, displays a complex periodic structure characterized by high-frequency ripples superimposed on a lower-frequency carrier. Spectral analysis of this signal via FFT confirms the mathematical composition of the wave. As shown in Figure \ref{fig-spectrum}, the transform identifies four distinct peaks. These peaks correspond precisely to the coefficients $4, 16, 32,$ and $128$ in the frequency domain, with magnitudes of $128.0, 25.6, 16.0,$ and $8.0$ respectively, reflecting the original amplitudes utilized in the generation phase.
+
+![Initial multi-component cosine signal in the time domain.](1_signal.pdf){#fig-signal width=100% fig-pos='h'}
+
+![Frequency spectrum of the composite signal identifying the four constituent frequencies.](2_spectrum.pdf){#fig-spectrum width=100% fig-pos='h'}
+
+### Noise Corruption and Spectral Mitigation
+The introduction of random white noise produced a jagged time-domain function where the primary oscillation became partially obscured by unpredictable fluctuations (Figure \ref{fig-noisy-sig}). In the frequency domain, this interference manifested as a broad "noise floor" of low-magnitude components distributed across nearly the entire spectral range (Figure \ref{fig-noisy-spec}).
+
+![Signal corrupted by random stochastic noise.](3_noisy_signal.pdf){#fig-noisy-sig width=100% fig-pos='h'}
+
+![Spectrum of the corrupted signal showing the noise floor surrounding the primary peak.](4_noisy_spectrum.pdf){#fig-noisy-spec width=100% fig-pos='h'}
+
+By applying a magnitude threshold of 50, the noise floor was effectively eliminated while preserving the high-magnitude peak of the primary signal (Figure \ref{fig-filtered-spec}). The efficacy of this filtering approach is confirmed by the subsequent inverse transform (Figure \ref{fig-inversion}), which produced a significantly smoothed wave. The reconstructed signal successfully recovered the original periodicity and was confined strictly to the expected amplitude range, demonstrating that the stochastic interference was effectively removed without distorting the primary data.
+
+![Filtered spectrum after zeroing components below the magnitude threshold of 50.](5_filtered_spectrum.pdf){#fig-filtered-spec width=100% fig-pos='h'}
+
+![Smooth signal reconstructed via inverse FFT following spectral filtering.](6_inverse_signal.pdf){#fig-inversion width=100% fig-pos='h'}
+
+## Conclusion
+
+The laboratory tasks successfully demonstrated the versatility and power of the Fast Fourier Transform in digital signal processing. The results indicate that the transformation between time and frequency domains allows for the isolation and identification of discrete signal components within a complex superposition. Furthermore, the implementation of threshold filtering in the frequency domain proved to be a highly effective methodology for noise reduction. The successful reconstruction of a clean signal from noise-corrupted data highlights the essential role of FFT algorithms in practical engineering applications where signal fidelity is paramount.

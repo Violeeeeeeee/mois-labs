@@ -1,0 +1,13 @@
+1_signal.pdf
+2_spectrum.pdf
+3_noisy_signal.pdf
+4_noisy_spectrum.pdf
+5_filtered_spectrum.pdf
+6_inverse_signal.pdf
+
+filtered_spectrum.txt
+inverse_signal.txt
+noisy_signal.txt
+noisy_spectrum.txt
+signal.txt
+spectrum.txt
