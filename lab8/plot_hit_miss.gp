@@ -11,5 +11,6 @@ set xlabel "Number of Trials (N)"
 set ylabel "Absolute Error"
 
 
-plot "hit_miss_data.txt" using 1:2 with linespoints title "f(x) = x^2 + x + 1", \
-     "hit_miss_data.txt" using 1:3 with linespoints title "f(x) = sqrt(1-x^2)"
+plot "hit_miss_data.txt" using 1:2 with linespoints title "f_1(x) = x^2 + x + 1", \
+     "hit_miss_data.txt" using 1:3 with linespoints title "f_2(x) = sqrt(1-x^2)", \
+     "hit_miss_data.txt" using 1:4 with linespoints title "f_3(x) = 1/sqrt(x)"

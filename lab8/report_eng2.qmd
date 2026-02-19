@@ -1,0 +1,76 @@
+---
+format:
+  pdf:
+    documentclass: llncs
+    classoption: runningheads
+    pdf-engine: pdflatex
+    cite-method: natbib
+    biblio-style: splncs04
+    natbiboptions: "numbers,sort,compress,sectionbib"
+    number-sections: true
+    number-depth: 3
+bibliography: bibliography.bib
+---
+
+\title{Lab 8: Monte Carlo Integration}
+\titlerunning{Lab 8: Monte Carlo}
+
+\author{Vladyslav Humeniuk}
+\authorrunning{Vladyslav Humeniuk}
+\institute{}
+\maketitle
+
+## Introduction {#sec-intro}
+
+The objective of this laboratory was the empirical verification of Monte Carlo methods for numerical integration. The exercise focuses on evaluating the definite integral of three specific functions on the interval $(0, 1)$: $f_1(x) = x^2 + x + 1$, $f_2(x) = \sqrt{1 - x^2}$, and $f_3(x) = \frac{1}{\sqrt{x}}$.
+
+The study compares the basic Hit-and-Miss algorithm against advanced multidimensional integration routines provided by the GNU Scientific Library: PLAIN, MISER, and VEGAS [@gsl_monte]. Standard Monte Carlo methods rely on random sampling to approximate integrals [@mathworld_mc], with the theoretical error estimate decreasing proportionally to $1/\sqrt{N}$, where $N$ is the total number of sample points. The quality of these numerical methods fundamentally depends on the underlying pseudorandom number generators [@taygeta_rng].
+
+## Methodology
+
+The computational procedure was divided into two main approaches. The first approach involved the Hit-and-Miss method, which requires defining a finite rectangular bounding box that fully encloses the function. While this geometric approach works correctly for bounded functions such as $f_1(x)$ (bounded by $y_{max}=3$) and $f_2(x)$ (bounded by $y_{max}=1$), it inherently fails for $f_3(x) = 1/\sqrt{x}$. Because the function approaches infinity as $x \to 0$, it is impossible to establish the true maximum boundary required for generating uniform random coordinates. To empirically demonstrate this failure, an arbitrary high cutoff of $y_{max}=1000$ was used during the Hit-and-Miss execution for $f_3(x)$.
+
+The second approach utilized advanced numerical integration routines to evaluate all three functions. These algorithms are designed such that random sample points are strictly chosen within the integration region, automatically avoiding endpoint singularities [@gsl_monte]. The PLAIN method performs a standard uniform sampling over the region. To significantly improve convergence, variance reduction techniques are applied: the MISER algorithm utilizes recursive stratified sampling to concentrate points in regions of highest variance, whereas the VEGAS algorithm employs importance sampling, adapting its probability distribution to match the integrand's behavior [@gsl_monte].
+
+## Results
+
+### Hit-and-Miss Convergence
+
+Figure \ref{fig-hitmiss} illustrates the absolute error convergence for the Hit-and-Miss algorithm on a logarithmic scale.
+
+![Hit-and-Miss Integration Error vs. Number of Trials. The downward trend for $f_1(x)$ and $f_2(x)$ reflects standard Monte Carlo error scaling, whereas the method completely fails to accurately evaluate the unbounded $f_3(x)$.](hit_and_miss_error.pdf){#fig-hitmiss width=100% fig-pos='h'}
+
+The data demonstrates a steady downward trend for $f_1$ and $f_2$, which is highly consistent with the theoretical $O(1/\sqrt{N})$ Monte Carlo error scaling. However, for $f_3(x)$, the method produces highly inaccurate results regardless of the number of trials. The arbitrary bounding box truncates the asymptote, preventing the algorithm from accounting for the area under the singularity.
+
+### GSL Methods Comparison
+
+Table \ref{tbl-gsl-summary} summarizes the integration errors for all three functions utilizing the PLAIN, MISER, and VEGAS strategies at the maximum tested resolution ($N = 500,000$).
+
+::: {#tbl-gsl-summary tbl-pos='h'}
+\begin{table}
+\centering
+\begin{tabular}{|l|c|c|c|}
+\hline
+Function & PLAIN Error & MISER Error & VEGAS Error \\
+\hline
+$f_1(x) = x^2 + x + 1$ & $8.77 \times 10^{-5}$ & $3.41 \times 10^{-6}$ & $1.27 \times 10^{-9}$ \\
+$f_2(x) = \sqrt{1 - x^2}$ & $2.15 \times 10^{-5}$ & $2.73 \times 10^{-7}$ & $4.26 \times 10^{-10}$ \\
+$f_3(x) = 1/\sqrt{x}$ & $7.51 \times 10^{-5}$ & $2.84 \times 10^{-4}$ & $5.83 \times 10^{-6}$ \\
+\hline
+\end{tabular}
+\end{table}
+Final absolute errors at $N = 500,000$ function calls for all tested GSL methods.
+:::
+
+![Error vs. Number of Function Calls for $f_1(x)$.](gsl_methods_error_f1.pdf){#fig-gsl1 width=49% fig-pos='h'}
+![Error vs. Number of Function Calls for $f_2(x)$.](gsl_methods_error_f2.pdf){#fig-gsl2 width=49% fig-pos='h'}
+
+![Error vs. Number of Function Calls for $f_3(x)$. The VEGAS algorithm adapts to the singularity efficiently.](gsl_methods_error_f3.pdf){#fig-gsl3 width=70% fig-align='center' fig-pos='h'}
+
+The results highlight the massive impact of variance reduction techniques. For smooth functions ($f_1$ and $f_2$), the VEGAS algorithm achieves extraordinary precision (up to $10^{-10}$), completely outclassing the PLAIN uniform sampling method.
+
+For the unbounded function $f_3(x)$, standard uniform sampling (PLAIN) and stratified sampling (MISER) struggle significantly due to the extreme variance near $x=0$. However, the VEGAS algorithm successfully mitigates this by adapting its sampling grid to the integrand's sharp peak, achieving an error of $5.83 \times 10^{-6}$, proving its robustness against integrable singularities.
+
+## Conclusion
+
+The conducted experiments confirm the theoretical principles and limitations of Monte Carlo integration. The rudimentary Hit-and-Miss method provides intuitive and correct results but is strictly limited to bounded functions. Advanced integration routines effectively handle endpoint singularities by constraining the sample space safely. Furthermore, variance reduction techniques are critical for computational efficiency. The VEGAS algorithm, utilizing importance sampling, proved to be highly superior across all tested scenarios, requiring significantly fewer iterations to reach a high degree of precision compared to uniform random sampling or basic stratification.
