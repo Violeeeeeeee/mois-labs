@@ -17,7 +17,6 @@ double f1(double x) { return x*x + x + 1.0; }
 double f2(double x) { return sqrt(1.0 - x*x); }
 double f3(double x) { return 1.0 / sqrt(x); }
 
-// Hit-and-miss integration function
 double hit_and_miss(double (*func)(double), double x_min, double x_max, double y_max, int N) {
     int hits = 0;
     for (int i = 0; i < N; i++) {
@@ -31,7 +30,6 @@ double hit_and_miss(double (*func)(double), double x_min, double x_max, double y
     return box_area * ((double)hits / N);
 }
 
-// --- GSL Compatible Functions ---
 double gsl_f1(double x[], size_t dim, void * p) {
     (void)(dim); (void)(p);
     return x[0]*x[0] + x[0] + 1.0;
