@@ -1,0 +1,77 @@
+---
+format:
+  pdf:
+    documentclass: llncs
+    classoption: runningheads
+    pdf-engine: pdflatex
+    cite-method: natbib
+    biblio-style: splncs04
+    natbiboptions: "numbers,sort,compress,sectionbib"
+    number-sections: true
+    number-depth: 3
+bibliography: bibliography.bib
+---
+
+\title{Sprawozdanie z laboratorium 8: Całkowanie metodą Monte Carlo}
+\titlerunning{Lab 8: Monte Carlo}
+
+\author{Vladyslav Humeniuk}
+\authorrunning{Vladyslav Humeniuk}
+\institute{}
+\maketitle
+
+## Wstęp {#sec-intro}
+
+Celem niniejszego laboratorium była empiryczna weryfikacja metod Monte Carlo do całkowania numerycznego. Ćwiczenie skupia się na obliczeniu całki oznaczonej trzech konkretnych funkcji w przedziale $(0, 1)$: $f_1(x) = x^2 + x + 1$, $f_2(x) = \sqrt{1 - x^2}$ oraz $f_3(x) = \frac{1}{\sqrt{x}}$.
+
+Badanie porównuje podstawowy algorytm Hit-and-Miss z zaawansowanymi wielowymiarowymi procedurami całkowania dostarczanymi przez *GNU Scientific Library*: PLAIN, MISER i VEGAS [@gsl_monte]. Standardowe metody Monte Carlo opierają się na losowym próbkowaniu w celu przybliżenia całek [@mathworld_mc], przy czym teoretyczne oszacowanie błędu maleje proporcjonalnie do $1/\sqrt{N}$, gdzie $N$ jest całkowitą liczbą punktów próbkowania. Jakość tych metod numerycznych zależy zasadniczo od zastosowanych generatorów liczb pseudolosowych [@taygeta_rng].
+
+## Metodyka
+
+Procedura obliczeniowa została podzielona na dwa główne podejścia. Pierwsze podejście obejmowało metodę Hit-and-Miss, która wymaga zdefiniowania skończonego prostokątnego obszaru ograniczającego, który w pełni zamyka funkcję. Chociaż to podejście geometryczne działa poprawnie dla funkcji ograniczonych, takich jak $f_1(x)$ (ograniczona przez $y_{max}=3$) i $f_2(x)$ (ograniczona przez $y_{max}=1$), z natury zawodzi dla $f_3(x) = 1/\sqrt{x}$. Ponieważ funkcja dąży do nieskończoności dla $x \to 0$, niemożliwe jest ustalenie prawdziwej maksymalnej granicy wymaganej do wygenerowania jednorodnych współrzędnych losowych. Aby empirycznie zademonstrować to niepowodzenie, podczas wykonywania metody Hit-and-Miss dla $f_3(x)$ zastosowano arbitralnie wysokie odcięcie $y_{max}=1000$.
+
+Drugie podejście wykorzystywało zaawansowane numeryczne procedury całkowania do oceny wszystkich trzech funkcji. Algorytmy te są zaprojektowane w taki sposób, że losowe punkty próbkowania są ściśle wybierane w obszarze całkowania, automatycznie unikając osobliwości na końcach przedziału [@gsl_monte]. Metoda PLAIN wykonuje standardowe jednorodne próbkowanie nad obszarem. W celu znacznej poprawy zbieżności stosowane są techniki redukcji wariancji: algorytm MISER wykorzystuje rekurencyjne próbkowanie warstwowe, aby skoncentrować punkty w obszarach o największej wariancji, podczas gdy algorytm VEGAS wykorzystuje próbkowanie warunkowe (importance sampling), dostosowując swój rozkład prawdopodobieństwa do zachowania funkcji podcałkowej [@gsl_monte].
+
+## Wyniki
+
+### Hit-and-Miss Convergence
+
+Rysunek \ref{fig-hitmiss} przedstawia zbieżność błędu bezwzględnego dla algorytmu Hit-and-Miss w skali logarytmicznej.
+
+![Hit-and-Miss Integration Error vs. Number of Trials](hit_and_miss_error.pdf){#fig-hitmiss width=100% fig-pos='h'}
+
+Dane wykazują stałą tendencję spadkową dla $f_1$ i $f_2$, co jest wysoce spójne z teoretycznym skalowaniem błędu Monte Carlo $O(1/\sqrt{N})$. Jednakże dla $f_3(x)$ metoda daje wysoce niedokładne wyniki niezależnie od liczby prób. Arbitralny obszar ograniczający ucina asymptotę, uniemożliwiając algorytmowi uwzględnienie obszaru pod osobliwością.
+
+### GSL Methods Comparison
+
+Tabela \ref{tbl-gsl-summary} podsumowuje błędy całkowania dla wszystkich trzech funkcji przy wykorzystaniu strategii PLAIN, MISER i VEGAS przy maksymalnej testowanej rozdzielczości ($N = 500 000$).
+
+\newpage
+
+![Error vs. Number of Function Calls for $f_1(x)$, $f_2(x)$, $f_3(x)$.](gsl_methods_error_combined.pdf){#fig-gsl1 width=100% fig-pos='h'}
+
+\newpage
+
+::: {#tbl-gsl-summary tbl-pos='h'}
+\begin{table}
+\centering
+\begin{tabular}{|l|c|c|c|}
+\hline
+Function & PLAIN Error & MISER Error & VEGAS Error \\
+\hline
+$f_1(x) = x^2 + x + 1$ & $8.77 \times 10^{-5}$ & $3.41 \times 10^{-6}$ & $1.27 \times 10^{-9}$ \\
+$f_2(x) = \sqrt{1 - x^2}$ & $2.15 \times 10^{-5}$ & $2.73 \times 10^{-7}$ & $4.26 \times 10^{-10}$ \\
+$f_3(x) = 1/\sqrt{x}$ & $7.51 \times 10^{-5}$ & $2.84 \times 10^{-4}$ & $5.83 \times 10^{-6}$ \\
+\hline
+\end{tabular}
+\end{table}
+Final absolute errors at $N = 500,000$ function calls for all tested GSL methods.
+:::
+
+Wyniki podkreślają ogromny wpływ technik redukcji wariancji, Rysunek \ref{fig-gsl1}. Dla funkcji gładkich ($f_1$ i $f_2$) algorytm VEGAS osiąga niezwykłą precyzję (do $10^{-10}$), całkowicie deklasując metodę jednorodnego próbkowania PLAIN.
+
+Dla funkcji nieograniczonej $f_3(x)$, standardowe próbkowanie jednorodne (PLAIN) i próbkowanie warstwowe (MISER) zmagają się ze znacznymi trudnościami z powodu skrajnej wariancji w pobliżu $x=0$. Jednak algorytm VEGAS skutecznie łagodzi ten problem, dostosowując swoją siatkę próbkowania do ostrego piku funkcji podcałkowej, osiągając błąd rzędu $5.83 \times 10^{-6}$, co dowodzi jego odporności na całkować osobliwości.
+
+## Wnioski
+
+Przeprowadzone eksperymenty potwierdzają teoretyczne zasady i ograniczenia całkowania metodą Monte Carlo. Podstawowa metoda Hit-and-Miss zapewnia intuicyjne i poprawne wyniki, ale jest ściśle ograniczona do funkcji ograniczonych. Zaawansowane procedury całkowania skutecznie radzą sobie z osobliwościami na końcach przedziałów poprzez bezpieczne ograniczenie przestrzeni próbek. Ponadto, techniki redukcji wariancji mają kluczowe znaczenie dla wydajności obliczeniowej. Algorytm VEGAS, wykorzystujący próbkowanie warunkowe, okazał się wysoce lepszy we wszystkich testowanych scenariuszach, wymagając znacznie mniejszej liczby iteracji, aby osiągnąć wysoki stopień precyzji w porównaniu do jednorodnego próbkowania losowego lub podstawowej stratyfikacji.
