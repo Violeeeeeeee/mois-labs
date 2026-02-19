@@ -32,7 +32,7 @@ int main(void) {
     fclose(f_spec);
 
     // Task 3: Generate the noisy signal
-    srand(time(NULL)); // Initialize random seed
+    srand(time(NULL));
     f_nsig = fopen("noisy_signal.txt", "w");
     for (i = 0; i < N; i++) {
         noisy_data[i] = cos(4.0*M_PI*i/N) + ((float)rand()) / RAND_MAX / 8.0;

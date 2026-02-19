@@ -2,7 +2,6 @@ set terminal pdfcairo enhanced color font "Verdana,10" size 4,3
 set grid
 set key right top opaque
 
-# Extend x-axis slightly beyond 256 to match the template
 set xrange [0:256]
 
 # Task 1
