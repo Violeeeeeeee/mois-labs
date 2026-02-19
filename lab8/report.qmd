@@ -67,11 +67,11 @@ Czasy wykonania i błędy rezydualne dla wybranych rozmiarów macierzy.
 
 Otrzymane wyniki jednoznacznie ukazują dysproporcję w tempie wzrostu kosztu obliczeniowego obu operacji. Na Rysunku \ref{fig-decomp} przedstawiono czas dekompozycji, który wykazuje charakterystyczny dla złożoności $O(N^3)$ trend sześcienny, zgodny z teorią numeryczną[@lu_decomp].
 
-![Zależność czasu dekompozycji LU od rozmiaru macierzy $N$. Widoczny trend wzrostu rzędu $O(N^3)$.](decomp_plot.pdf){#fig-decomp width=100% fig-pos='h'}
+![Zależność czasu dekompozycji LU od rozmiaru macierzy $N$. Widoczny trend wzrostu rzędu $O(N^3)$.](gsl_methods_error.pdf){#fig-decomp width=100% fig-pos='h'}
 
 Z kolei czas rozwiązywania układu (Rysunek \ref{fig-solve}) rośnie w tempie kwadratowym. Nawet dla dużych wartości $N$, operacja ta pozostaje rzędy wielkości szybsza niż sama faktoryzacja.
 
-![Zależność czasu rozwiązywania układu od rozmiaru macierzy $N$. Trend zgodny ze złożonością $O(N^2)$.](solve_plot.pdf){#fig-solve width=100% fig-pos='h'}
+![Zależność czasu rozwiązywania układu od rozmiaru macierzy $N$. Trend zgodny ze złożonością $O(N^2)$.](hit_and_miss_error.pdf){#fig-solve width=100% fig-pos='h'}
 
 Aby precyzyjnie ocenić skalowalność algorytmu, porównano wzrost czasu wykonania przy dwukrotnym zwiększeniu rozmiaru problemu (z $N=500$ do $N=1000$):
 
@@ -87,7 +87,7 @@ Aby precyzyjnie ocenić skalowalność algorytmu, porównano wzrost czasu wykona
 
 Rysunek \ref{fig-log} w skali logarytmicznej obrazuje powiększającą się różnicę między nakładem obliczeniowym obu faz procesu.
 
-![Porównanie czasów dekompozycji i rozwiązywania w skali logarytmicznej. Różne nachylenia krzywych odpowiadają różnym klasom złożoności.](combined_log_plot.pdf){#fig-log width=100% fig-pos='h'}
+<!-- ![Porównanie czasów dekompozycji i rozwiązywania w skali logarytmicznej. Różne nachylenia krzywych odpowiadają różnym klasom złożoności.](combined_log_plot.pdf){#fig-log width=100% fig-pos='h'} -->
 
 ## Wnioski
 

@@ -1,0 +1,52 @@
+---
+format:
+  pdf:
+    documentclass: llncs
+    classoption: runningheads
+    pdf-engine: pdflatex
+    cite-method: natbib
+    biblio-style: splncs04
+    natbiboptions: "numbers,sort,compress,sectionbib"
+    number-sections: true
+    number-depth: 3
+bibliography: bibliography.bib
+---
+
+\title{Monte Carlo Integration: Hit-and-Miss and GSL Algorithms}
+\titlerunning{Lab: Monte Carlo Integration}
+
+\author{Vladyslav Humeniuk}
+\authorrunning{Vladyslav Humeniuk}
+\institute{}
+\maketitle
+
+## Introduction
+Monte Carlo integration utilizes random sampling to estimate the value of definite integrals @mathworld_mc. This technique is particularly valuable for complex or multidimensional integrals where deterministic numerical methods are inefficient. In this report, Monte Carlo methods are evaluated by computing the integrals of three functions over the interval $(0,1)$: $f_1(x) = x^2 + x + 1$, $f_2(x) = \sqrt{1-x^2}$, and $f_3(x) = 1/\sqrt{x}$. The study implements a custom "Hit-and-Miss" method and compares it against three advanced algorithms provided by the GNU Scientific Library (GSL): PLAIN, MISER, and VEGAS.
+
+## Methodology
+
+### The Hit-and-Miss Method
+The Hit-and-Miss method estimates an integral by embedding the function within a bounding rectangle defined by $[x_{min}, x_{max}] \times [0, y_{max}]$. Random coordinate pairs $(x, y)$ are generated uniformly within this box. The integral is evaluated as the proportion of points that fall below the function curve ($y \leq f(x)$) multiplied by the total area of the bounding box.
+
+While effective for bounded continuous functions like $f_1(x)$ and $f_2(x)$, this method fails for functions with vertical asymptotes within the integration domain. Specifically, $f_3(x) = 1/\sqrt{x}$ approaches infinity as $x \to 0$. Because no finite $y_{max}$ can bound $f_3(x)$ on $(0,1)$, the fundamental requirement of a finite bounding box is violated, rendering the Hit-and-Miss method inapplicable.
+
+### GSL Integration Algorithms
+To accurately integrate both bounded and unbounded functions, the GNU Scientific Library's Monte Carlo routines were utilized @gsl_monte. These routines restrict random sample points strictly within the integration region, ensuring that endpoint singularities, such as the one at $x=0$ for $f_3(x)$, are safely avoided @gsl_monte.
+
+1. **PLAIN Monte Carlo:** The plain Monte Carlo algorithm samples points entirely randomly from the integration region @gsl_monte. The variance of the mean decreases asymptotically, causing the error to drop proportionally to $1/\sqrt{N}$ @gsl_monte.
+2. **MISER:** Based on recursive stratified sampling, MISER aims to reduce the overall integration error by concentrating integration points in the regions of highest variance @gsl_monte. It bisects the integration region recursively and allocates sample points in proportion to the standard deviation of the sub-regions @gsl_monte.
+3. **VEGAS:** This algorithm utilizes importance sampling by drawing points from a probability distribution that approximates the target function's shape, $|f|$ @gsl_monte. By iterating over the integration region and continuously refining a histogram of the function, VEGAS minimizes variance and highly concentrates samples where the function makes the largest contribution @gsl_monte.
+
+## Results
+
+### Hit-and-Miss Convergence
+The Hit-and-Miss algorithm was executed for $f_1(x)$ and $f_2(x)$ over an increasing number of trials $N$. The absolute error was calculated by comparing the simulated results with the exact analytical integrals ($11/6$ and $\pi/4$, respectively). When visualized on a logarithmic scale, the error demonstrated a linear downward trend characteristic of the expected $1/\sqrt{N}$ convergence rate. However, the exact error magnitudes fluctuated due to the stochastic nature of the sampling.
+
+### GSL Method Comparison
+The integral of $f_3(x) = 1/\sqrt{x}$ was computed using the PLAIN, MISER, and VEGAS methods for $N$ ranging from 1,000 to 100,000 function calls.
+* The **PLAIN** method successfully computed the integral but exhibited slow convergence, requiring significantly more function calls to reach a low error tolerance, behaving similarly to the Hit-and-Miss test.
+* The **MISER** algorithm showed notably faster convergence than PLAIN, as its recursive stratification successfully isolated the high variance near the $x \to 0$ singularity.
+* The **VEGAS** algorithm yielded the highest accuracy for the lowest number of function calls. By adapting its sampling distribution over multiple iterations, it successfully focused its computational effort on the singularity, dropping the absolute error drastically compared to the PLAIN method.
+
+## Conclusion
+Monte Carlo methods offer a robust approach to numerical integration, though pure random sampling (Hit-and-Miss, PLAIN) suffers from slow $1/\sqrt{N}$ error convergence @gsl_monte. Furthermore, bounding box dependencies severely limit basic algorithms when evaluating improper integrals. Utilizing variance reduction techniques—such as stratified sampling (MISER) and importance sampling (VEGAS)—drastically improves convergence rates and computational efficiency. VEGAS proved particularly superior for evaluating functions with steep gradients and boundary singularities.
