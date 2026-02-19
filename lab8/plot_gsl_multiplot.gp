@@ -20,7 +20,7 @@ set logscale y
 set key right top opaque
 set ylabel "Estimated Error"
 
-# --- Plot 1: Top (f1) ---
+# Plot 1: Top (f1)
 set title "GSL Methods Error: f_1(x) = x^2 + x + 1"
 unset xlabel
 set format x "" # Hide X-axis numbers for cleaner stacking
@@ -28,13 +28,13 @@ plot "gsl_data_f1.txt" using 1:2 with linespoints title "PLAIN", \
      "gsl_data_f1.txt" using 1:3 with linespoints title "MISER", \
      "gsl_data_f1.txt" using 1:4 with linespoints title "VEGAS"
 
-# --- Plot 2: Middle (f2) ---
+# Plot 2: Middle (f2)
 set title "GSL Methods Error: f_2(x) = sqrt(1-x^2)"
 plot "gsl_data_f2.txt" using 1:2 with linespoints title "PLAIN", \
      "gsl_data_f2.txt" using 1:3 with linespoints title "MISER", \
      "gsl_data_f2.txt" using 1:4 with linespoints title "VEGAS"
 
-# --- Plot 3: Bottom (f3) ---
+# Plot 3: Bottom (f3)
 set title "GSL Methods Error: f_3(x) = 1/sqrt(x)"
 set xlabel "Number of Calls"
 set format x "%h" # Restore X-axis numbers for the bottom plot
